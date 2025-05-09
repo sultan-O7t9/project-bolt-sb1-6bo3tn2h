@@ -22,7 +22,6 @@ router.post('/register', [
   body('password', 'Password must be at least 6 characters').isLength({ min: 6 })
 ], async (req, res, next) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -31,7 +30,7 @@ router.post('/register', [
     const { name, email, password, role } = req.body;
 
     // Check if user exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ where: { email } });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -41,20 +40,16 @@ router.post('/register', [
       name,
       email,
       password,
-      role: role || 'user' // Default to 'user' if role is not provided
+      role: role || 'user'
     });
 
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id)
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
+    res.status(201).json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user.id)
+    });
   } catch (error) {
     next(error);
   }
@@ -68,7 +63,6 @@ router.post('/login', [
   body('password', 'Password is required').exists()
 ], async (req, res, next) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -77,7 +71,7 @@ router.post('/login', [
     const { email, password } = req.body;
 
     // Check for user email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -89,11 +83,11 @@ router.post('/login', [
     }
 
     res.json({
-      _id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      token: generateToken(user._id)
+      token: generateToken(user.id)
     });
   } catch (error) {
     next(error);
@@ -105,7 +99,10 @@ router.post('/login', [
 // @access  Private
 router.get('/profile', protect, async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ['password'] }
+    });
+    
     if (user) {
       res.json(user);
     } else {

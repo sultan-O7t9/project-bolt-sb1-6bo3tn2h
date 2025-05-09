@@ -1,43 +1,25 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+import User from './User.js';
 
-const postSchema = new mongoose.Schema({
+const Post = sequelize.define('Post', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   title: {
-    type: String,
-    required: [true, 'Please add a title'],
-    trim: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   content: {
-    type: String,
-    required: [true, 'Please add content']
-  },
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  media: [{
-    type: {
-      type: String,
-      enum: ['image', 'video'],
-      required: true
-    },
-    url: {
-      type: String,
-      required: true
-    }
-  }],
-  likes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  comments: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Comment'
-  }]
-}, {
-  timestamps: true
+    type: DataTypes.TEXT,
+    allowNull: false
+  }
 });
 
-const Post = mongoose.model('Post', postSchema);
+// Define associations
+Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' });
+Post.belongsToMany(User, { through: 'PostLikes', as: 'likedBy' });
 
 export default Post;

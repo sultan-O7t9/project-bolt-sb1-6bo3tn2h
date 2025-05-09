@@ -1,9 +1,9 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import sequelize from './config/database.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -37,14 +37,14 @@ app.use('/api/likes', likeRoutes);
 // Error handling middleware
 app.use(errorHandler);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+// Connect to MySQL and start server
+sequelize.sync()
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to MySQL database');
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((error) => {
-    console.error('MongoDB connection error:', error);
+    console.error('Database connection error:', error);
   });

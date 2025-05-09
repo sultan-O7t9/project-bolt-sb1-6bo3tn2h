@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sequelize from './config/database.js';
+import sequelize, { runMigrations } from './config/database.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -37,10 +37,15 @@ app.use('/api/likes', likeRoutes);
 // Error handling middleware
 app.use(errorHandler);
 
-// Connect to MySQL and start server
-sequelize.sync()
-  .then(() => {
+// Connect to MySQL, run migrations, and start server
+sequelize.authenticate()
+  .then(async () => {
     console.log('Connected to MySQL database');
+    
+    // Run migrations
+    await runMigrations();
+    
+    // Start server
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
